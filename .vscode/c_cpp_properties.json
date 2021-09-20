@@ -1,0 +1,60 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [
+                "TARGET_RELEASE",
+                "DEVICE_PORTIN=1",
+                "DEVICE_ANALOGIN=1",
+                "__MBED_CMSIS_RTOS_CM",
+                "__MBED__=1",
+                "DEVICE_LOWPOWERTIMER=1",
+                "DEVICE_SERIAL_FC=1",
+                "TOOLCHAIN_GCC",
+                "DEVICE_SLEEP=1",
+                "DEVICE_STDIO_MESSAGES=1",
+                "TARGET_M4",
+                "ARM_MATH_CM4",
+                "TOOLCHAIN_GCC_ARM",
+                "TARGET=MAX32630",
+                "__FPU_PRESENT=1",
+                "TARGET_Maxim",
+                "TARGET_MAX32630FTHR",
+                "DEVICE_INTERRUPTIN=1",
+                "DEVICE_SERIAL=1",
+                "TARGET_REV=0x4132",
+                "TARGET_CORTEX_M",
+                "OPEN_DRAIN_LEDS",
+                "TARGET_MAX32630",
+                "TARGET_LIKE_MBED",
+                "__SYSTEM_HFX=96000000",
+                "TARGET_LIKE_CORTEX_M4",
+                "DEVICE_RTC=1",
+                "DEVICE_I2C=1",
+                "DEVICE_SPI=1",
+                "DEVICE_PORTOUT=1",
+                "MBED_BUILD_TIMESTAMP=1627607020.7103891",
+                "TARGET_NAME=MAX32630FTHR",
+                "FEATURE_BLE=1",
+                "DEVICE_PWMOUT=1",
+                "TARGET_RTOS_M4_M7",
+                "DEVICE_PORTINOUT=1",
+                "__CORTEX_M4",
+                "BLE_HCI_UART",
+                "TARGET_CORTEX",
+                "__CMSIS_RTOS"
+            ],
+            "intelliSenseMode": "gcc-arm",
+            "compilerPath": "C:/MaximSDK/Tools/GNUTools/bin/arm-none-eabi-gcc.exe",
+            "browse": {
+                "path": [
+                    "${workspaceFolder}"
+                ]
+            }
+        }
+    ],
+    "version": 4
+}
