@@ -41,6 +41,7 @@ import serial
 from colorama import *
 import time
 from msbl import MsblFile
+from api import bootloader_api
 
 def parse_response(resp: bytes):
 	# Response will be a string with the format:  cmd=[some command]$ret=[return value]$err=[error code]$msg=[error msg]
@@ -76,201 +77,117 @@ if __name__ == "__main__":
 
 	colorama.init(convert=True)
 
+	# Load data from msbl file
 	print("Reading msbl file " + Fore.YELLOW + args.msblfile + Fore.WHITE + "...", end="")
 	msbl = MsblFile(args.msblfile)
 	print(Fore.GREEN + "Success!" + Fore.WHITE)
+
 	msbl.print_info()
 
-	# Open serial port to MAX32630FTHR
-	print(f"Opening serial connection to MAX32630FTHR on {Fore.YELLOW}{args.port}{Fore.WHITE}...", end="")
-	try:
-		s = serial.Serial(args.port)
-		s.timeout = 5
-	except Exception as e:
-		print(f"{Fore.RED}Failed.")
-		print(f"{Fore.CYAN}Is the MAX32630FTHR connected?  Is the right port specified?{Fore.WHITE}")
-		raise(e)
-	
+	# Connect to 32630FTHR
+	print(f"Connecting to MAX32630FTHR on {Fore.YELLOW}{args.port}{Fore.WHITE}...", end="")
+	bl = bootloader_api(args.port)
 	print(f"{Fore.GREEN}Success!{Fore.WHITE}")
 
 	# Let Sensor Hub initialize
-	print("Sleeping for 1.5s to let Sensor Hub initialize...")
-	time.sleep(1.5)
+	print("Sleeping for 3s to let Sensor Hub initialize", end="")
+	for i in range(6):
+		time.sleep(0.5)
+		print(".", end="")
+	print("Done!")
 
 	# Check for any existing firmware
-	print("Checking for existing firmware...")
 	print("\tAttempting to retrieve version number...", end="")
-	s.write(b"sh_version\n")
-	resp = parse_response(s.readline())
+	version = bl.send_cmd("sh_version", suppress=True) # Suppress exceptions for this command, since there may not be any firmware currently flashed
 
-	if (resp["err"] != 0):
-		print(f"\t{Fore.RED}Failed.\n{resp}{Fore.WHITE}")
-		print(f"{Fore.CYAN}Failed to retrieve current version #, but there may not be anything flashed.  Attempting to proceed anyways...{Fore.WHITE}")
-
-	else:
+	if version is not False:
 		print(f"{Fore.GREEN}Success!{Fore.WHITE}")
-		print(f"\t{Fore.YELLOW}Current firmware is v{resp['ret']}{Fore.WHITE}")
+		print(f"\t{Fore.YELLOW}Current firmware is v{version}{Fore.WHITE}")
+	else:
+		print(f"\t{Fore.RED}Failed.{Fore.WHITE}")
+		print(f"{Fore.CYAN}Failed to retrieve current version #, but there may not be anything flashed.  Attempting to proceed anyways...{Fore.WHITE}")
 
 	# Enter bootloader mode
 	print(f"Entering bootloader mode...", end="")
-	s.write(b"bootldr\n")
-	resp = parse_response(s.readline())
-
-	# Error check
-	if resp["err"] != 0: 
-		print(f"{Fore.RED}Failed.\n{resp}{Fore.WHITE}")
-		raise( Exception( "Failed to enter bootloader mode!  Failed on sending the software command." ) )
-	else:
-		print(f"{Fore.GREEN}Success!{Fore.WHITE}")
+	bl.send_cmd("bootldr")
+	print(f"{Fore.GREEN}Success!{Fore.WHITE}")
 
 	# Verify operating mode
-	print(f"Retrieving operating mode...", end="")
-	s.write(b"op_mode\n")
-	resp = parse_response(s.readline())
-
-	# Error check
-	if resp["err"] != 0: 
-		print(f"{Fore.RED}Failed.\n{resp}{Fore.WHITE}")
-		raise( Exception( "Failed to retrieve current operating mode!" ) )
-	else:
-		print(f"{Fore.GREEN}Success!{Fore.WHITE}")
-		if resp["ret"] != "Bootloader":
-			raise( Exception (f"Expected to be in bootloader mode, but in {resp['ret']} mode instead!") )
-		else:
-			print(f"{Fore.GREEN}Verified bootloader mode.{Fore.WHITE}")
+	op_mode = bl.send_cmd("op_mode")
+	if (op_mode != "Bootloader"): raise ( Exception( f"Failed to verify bootloader mode...  Device is in {op_mode} mode." ) )
 
 	# Get bootloader version
 	print(f"Getting bootloader version...", end="")
-	s.write(b"bootloader_version\n")
-	resp = parse_response(s.readline())
-
-	# Error check
-	if resp["err"] != 0:
-		print(f"{Fore.RED}Failed.\n{resp}{Fore.WHITE}")
-		raise( Exception( "Failed to get bootloader version!" ) )
-	else:
-		print(f"{Fore.GREEN}Success!{Fore.WHITE}")
-		print(f"\t{Fore.YELLOW}Bootloader version: {resp['ret']}{Fore.WHITE}")
+	bl_version = bl.send_cmd("bootloader_version")
+	print(f"{Fore.GREEN}Success!{Fore.WHITE}")
+	print(f"\t{Fore.YELLOW}Bootloader version: {bl_version}{Fore.WHITE}")
 
 	# Get page size
 	print(f"Getting page size...", end="")
-	s.write(b"page_size\n")
-	resp = parse_response(s.readline())
+	page_size = bl.send_cmd("page_size")
+	print(f"{Fore.GREEN}Success!{Fore.WHITE}")
 
-	# Error check
-	if resp["err"] != 0:
-		print(f"{Fore.RED}Failed.\n{resp}{Fore.WHITE}")
-		raise( Exception( "Failed to get supported page size!" ) )
+	# Verify page size
+	if page_size != msbl.header.pageSize:
+		print(f"{Fore.RED}Page size in bootloader does not match page size of msbl file.  Msbl file specifies a page size of {msbl.header.pageSize} but bootloader has a page size of {page_size}")
 	else:
-		print(f"{Fore.GREEN}Success!{Fore.WHITE}")
-		print(f"\tPage size: {resp['ret']}...", end="")
-		if resp['ret'] == msbl.header.pageSize:
-			print(f"{Fore.GREEN}Page size in bootloader matches page size of msbl file.{Fore.WHITE}")
-		else:
-			print(f"{Fore.RED}Page size in bootloader does not match page size of msbl file ({msbl.header.pageSize})")
+		print(f"{Fore.GREEN}Page size in bootloader matches page size of msbl file.{Fore.WHITE}")
 
 	# Set number of pages to flash
 	print(f"Setting number of pages to flash from msbl file ({msbl.header.numPages})...", end="")
-	s.write(f"num_pages {msbl.header.numPages}\n".encode("ASCII"))
-	resp = parse_response(s.readline())
-
-	# Error check
-	if resp["err"] != 0:
-		print(f"{Fore.RED}Failed.\n{resp}{Fore.WHITE}")
-		raise( Exception( "Failed to set number of pages to flash!" ) )
-	else:
-		print(f"{Fore.GREEN}Success!{Fore.WHITE}")
+	bl.send_cmd(f"num_pages {msbl.header.numPages}")
+	print(f"{Fore.GREEN}Success!{Fore.WHITE}")
 
 	# Set IV bytes ('nonce' from the header)
 	print(f"Setting Initialization Vector (IV) bytes...", end="")
 	nonce_hex = "".join("{:02X}".format(c) for c in msbl.header.nonce) # Firmware expects an ASCII representation of the hex values for the IV bytes concatenated into one long string
-	s.write(f"set_iv {nonce_hex}\n".encode("ASCII"))
-
-	# Error check
-	resp = parse_response(s.readline())
-	if resp["err"] != 0:
-		print(f"{Fore.RED}Failed.\n{resp}{Fore.WHITE}")
-		raise( Exception( "Failed to set IV bytes!" ) )
-	else:
-		print(f"{Fore.GREEN}Success!{Fore.WHITE}")
+	bl.send_cmd(f"set_iv {nonce_hex}")
+	print(f"{Fore.GREEN}Success!{Fore.WHITE}")
 
 	# Set authentication bytes
 	print(f"Setting Authentication bytes...", end="")
 	auth_hex = "".join("{:02X}".format(c) for c in msbl.header.auth)
-	s.write(f"set_auth {auth_hex}\n".encode("ASCII"))
-
-	# Error check
-	resp = parse_response(s.readline())
-	if resp["err"] != 0:
-		print(f"{Fore.RED}Failed.\n{resp}{Fore.WHITE}")
-		raise( Exception( "Failed to set authentication bytes!" ) )
-	else:
-		print(f"{Fore.GREEN}Success!{Fore.WHITE}")
+	bl.send_cmd(f"set_auth {auth_hex}")
+	print(f"{Fore.GREEN}Success!{Fore.WHITE}")
 
 	# Erase existing application flash memory
 	print(f"Erasing existing application flash memory...", end="")
-	s.write(b"erase\n")
-
-	resp = parse_response(s.readline())
-	if resp["err"] != 0:
-		print(f"{Fore.RED}Failed.\n{resp}{Fore.WHITE}")
-		raise( Exception( "Failed to erase existing application!" ) )
-	else:
-		print(f"{Fore.GREEN}Success!{Fore.WHITE}")
+	bl.send_cmd("erase")
+	print(f"{Fore.GREEN}Success!{Fore.WHITE}")
 
 	# Flash the msbl file page by page
 	print("Flashing msbl file...")
 	i = 1
 	for page in msbl.pages:
 		print(f"\tFlashing page {i}/{int(msbl.header.numPages)}...", end="")
-		s.write(b"flash\n") # Send flash command
-		s.write(bytes(page)) # Send page data
-	
-		# Error check
-		resp = parse_response(s.readline())
-
-		if resp["err"] != 0:
-			print(f"{Fore.RED}Failed.\n{resp}{Fore.WHITE}")
-			raise( Exception( f"Failed to flash page {i}/{int(msbl.header.numPages)}!" ) )
-		else:
-			print(f"{Fore.GREEN}Success!{Fore.WHITE}")
+		bl.flash_page(page)
+		print(f"{Fore.GREEN}Success!{Fore.WHITE}")
 
 		i += 1
 
 	# Exit bootloader mode, enter application mode
-	print("Entering application mode...", end="")
-	s.write(b"exit\n")
-	resp = parse_response(s.readline())
+	print("Exiting bootloader mode...", end="")
+	bl.send_cmd("exit")
+	print(f"{Fore.GREEN}Success!{Fore.WHITE}")
 
-	if resp["err"] != 0:
-		print(f"{Fore.RED}Failed.\n{resp}{Fore.WHITE}")
-	else:
-		print(f"{Fore.GREEN}Success!{Fore.WHITE}")
+	# Let Sensor Hub initialize
+	print("Sleeping for 3s to let Sensor Hub initialize", end="")
+	for i in range(6):
+		time.sleep(0.5)
+		print(".", end="")
+	print("Done!")
 
 	# Verify application mode
 	print(f"Retrieving operating mode...", end="")
-	s.write(b"op_mode\n")
-	resp = parse_response(s.readline())
+	op_mode = bl.send_cmd("op_mode")
+	print(f"{Fore.GREEN}Success!{Fore.WHITE}")
 
-	# Error check
-	if resp["err"] != 0: 
-		print(f"{Fore.RED}Failed.\n{resp}{Fore.WHITE}")
-		raise( Exception( "Failed to retrieve current operating mode!" ) )
-	else:
-		print(f"{Fore.GREEN}Success!{Fore.WHITE}")
-		if resp["ret"] != "Application":
-			raise( Exception (f"Expected to be in application mode, but in {resp['ret']} mode instead!") )
-		else:
-			print(f"{Fore.GREEN}Verified application mode.{Fore.WHITE}")
+	# Verify operating mode
+	if (op_mode != "Application"): raise ( Exception( f"Failed to verify bootloader mode...  Device is in {op_mode} mode." ) )
 
 	# Verify new firmware version
 	print("Retrieving new firmware version...", end="")
-	s.write(b"sh_version\n")
-	resp = parse_response(s.readline())
+	version = bl.send_cmd("sh_version")
+	print(f"{Fore.GREEN}Success!{Fore.WHITE}")
 
-	if resp["err"] != 0:
-		print(f"{Fore.RED}Failed.\n{resp}{Fore.WHITE}")
-	else:
-		print(f"{Fore.GREEN}Success!{Fore.WHITE}")
-
-	print(f"New firmware version is {Fore.YELLOW}v{resp['ret']}{Fore.WHITE}")
+	print(f"New firmware version is {Fore.YELLOW}v{version}{Fore.WHITE}")
