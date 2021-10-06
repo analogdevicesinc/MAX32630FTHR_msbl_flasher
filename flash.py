@@ -43,31 +43,6 @@ import time
 from msbl import MsblFile
 from api import bootloader_api
 
-def parse_response(resp: bytes):
-	# Response will be a string with the format:  cmd=[some command]$ret=[return value]$err=[error code]$msg=[error msg]
-	# This function splits the string up into tokens and returns the response as a decoded dictionary
-	copy = resp # Save a copy for error msg
-	resp = resp.decode("ASCII").split('$')
-
-	ret = dict()
-	for field in resp:
-		key_pair = field.split('=')
-		if len(key_pair) == 2: 
-			ret[key_pair[0]] = key_pair[1] # Construct a dictionary entry from the key-value pair.  Key will be first
-
-	# Convert to integer values where we can for convenience
-	for key in ret.keys():
-		try:
-			ret[key] = int(ret[key])
-		except:
-			pass
-
-	# Validate response
-	if "cmd" not in ret.keys() or "ret" not in ret.keys() or "err" not in ret.keys() or "msg" not in ret.keys():
-		raise( Exception( f"Unexpected response from device - failed to parse fields.  Received:\n{copy}\n... and parsed into:\n{ret}" ) )
-
-	return ret
-
 if __name__ == "__main__":
 	# Parse command line arguments
 	parser = argparse.ArgumentParser()
