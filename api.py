@@ -1,4 +1,42 @@
+"""
+/*******************************************************************************
+* Copyright (C) Maxim Integrated Products, Inc., All rights Reserved.
+* 
+* This software is protected by copyright laws of the United States and
+* of foreign countries. This material may also be protected by patent laws
+* and technology transfer regulations of the United States and of foreign
+* countries. This software is furnished under a license agreement and/or a
+* nondisclosure agreement and may only be used or reproduced in accordance
+* with the terms of those agreements. Dissemination of this information to
+* any party or parties not specified in the license agreement and/or
+* nondisclosure agreement is expressly prohibited.
+*
+* The above copyright notice and this permission notice shall be included
+* in all copies or substantial portions of the Software.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+* OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+* IN NO EVENT SHALL MAXIM INTEGRATED BE LIABLE FOR ANY CLAIM, DAMAGES
+* OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+* ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+* OTHER DEALINGS IN THE SOFTWARE.
+*
+* Except as contained in this notice, the name of Maxim Integrated
+* Products, Inc. shall not be used except as stated in the Maxim Integrated
+* Products, Inc. Branding Policy.
+*
+* The mere transfer of this software does not imply any licenses
+* of trade secrets, proprietary technology, copyrights, patents,
+* trademarks, maskwork rights, or any other form of intellectual
+* property whatsoever. Maxim Integrated Products, Inc. retains all
+* ownership rights.
+*******************************************************************************
+*/
+"""
+
 import serial
+from colorama import Fore
 from dataclasses import dataclass
 
 @dataclass
@@ -8,6 +46,21 @@ class response:
     err: int
     msg: str
     
+status_codes = {
+    0x00: "SUCCESS.  The write transaction was successful.",
+    0x01: "ERR_UNAVAIL_CMD. Illegal Family Byte and/or Index Byte was used. Verify that the Family Byte, Index Byte are valid for the host command sent. Verify that the latest .msbl is flashed.",
+    0x02: "ERR_UNAVAIL_FUNC. This function is not implemented. Verify that the Index Byte and Write Byte(s) are valid for the host command sent. Verify that the latest .msbl is flashed.",
+    0x03: "ERR_DATA_FORMAT. Incorrect number of bytes sent for the requested Family Byte. Verify that the correct number of bytes are sent for the host command. Verify that the latest .msbl is flashed.",
+    0x04: "ERR_INPUT_VALUE. Illegal configuration value was attempted to be set. Verify that the Index Byte is correct for Family Byte 0x44. Verify that the report period is not 0 for host command 0x10 0x02. Verify that the Write byte for host command 0x10 0x03 is in the valid range specified. Verify that the latest .msbl is flashed.",
+    0x05: "Application mode: ERR_INVALID_MODE. Not used in application mode.\nBootloader mode: ERR_ BTLDR_TRY_AGAIN. Device is busy. Insert delay and resend the host command.",
+    0x80: "ERR_BTLDR_GENERAL. General error while receiving/flashing a page during the bootloader sequence. Not used.",
+    0x81: "ERR_BTLDR_CHECKSUM. Bootloader checksum error while decrypting/checking page data. Verify that the keyed .msbl file is compatible with MAX32664A/B/C/D.",
+    0x82: "ERR_BTLDR_AUTH. Bootloader authorization error. Verify that the keyed .msbl file is compatible with MAX32664A/B/C/D.",
+    0x83: "ERR_BTLDR_INVALID_APP. Bootloader detected that the application is not valid.",
+    0xFE: "ERR_TRY_AGAIN. Device is busy, try again. Increase the delay before the command and increase the CMD_DELAY.",
+    0xFF: "ERR_UNKNOWN. Unknown Error. Verify that the communications to the AFE/KX-122 are correct by reading the PART_ID/WHO_AM_I register. For MAX32664B/C, the MAX32664 is in deep sleep unless the host sets the MFIO pin low 250μs before and during the I2C communications."
+} # See MAX32664 UG Table 5 (https://www.maximintegrated.com/en/design/technical-documents/app-notes/6/6806.html)
+
 class bootloader_api():
     def __init__(self, port: str, BAUD=9600, timeout=3 ):
         self.s = serial.Serial(port=port, baudrate=BAUD, timeout=timeout)
@@ -26,7 +79,12 @@ class bootloader_api():
 
         elif resp.err != 0:
             # Error code received from Sensor Hub
-            err = f"Error code {resp.err} received from sensor hub during command {cmd} with message: {resp.msg}"
+            err = ""
+            if resp.err in status_codes.keys():
+                err = f"{Fore.RED}Error code {hex(resp.err)} received from sensor hub during command {cmd}...  {status_codes[resp.err]}{Fore.WHITE}"
+            else:
+                err = f"{Fore.RED}Unknown error code {hex(resp.err)} received from sensor hub during command {cmd} with message: {resp.msg}...{Fore.WHITE}"
+
             if not suppress: raise( Exception( err ) )
             else:
                 print(err)
@@ -47,7 +105,13 @@ class bootloader_api():
 
         elif resp.err != 0:
             # Error code received from Sensor Hub
-            raise( Exception (f"Received error code {resp.err} from sensor hub while flashing page data with message: {resp.msg}") )
+            err_msg = ""
+            if resp.err in status_codes.keys():
+                err_msg = f"{Fore.RED}Error code {hex(resp.err)} received from sensor hub while flashing page data...  {status_codes[resp.err]}{Fore.WHITE}"
+            else:
+                err_msg = f"{Fore.RED}Unknown error code {hex(resp.err)} received from sensor hub while flashing page data... {resp.msg}{Fore.WHITE}"
+
+            raise(Exception(err_msg))
 
         else:
             # Page flashed OK
