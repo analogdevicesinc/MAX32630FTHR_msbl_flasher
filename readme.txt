@@ -1,16 +1,45 @@
-Installation:
-1. Install Python 3 and add it to the PATH.  Ensure pip is added to path as well.
+MSBL flashing firmware and control script for the MAX32630FTHR.  This software flashes .msbl files onto a MAX32664 Biometric Sensor Hub.  The MAX32664 can be on
+one of Maxim's reference designs or on a custom PCB, provided that the necessary hardware connections are exposed correctly.
+- RSTN
+- MFIO
+- SLAVE_SCL (external pull-up required)
+- SLAVE_SDA (external pull-up required)
+- VSS (GND)
 
-2. Open a command prompt and cd into this directory.
-
-3. "pip install -r requirements.txt" to install Python libraries (colorama and pyserial)
+Additionally, VDD power must be supplied to the MAX32664.  This can come from the MAX32630FTHR or from the target design.  This software uses 3.3V logic level.
+It's recommended to power the MAX32664 from 3.3V for the flash, otherwise use a logic level translator.
 
 Usage:
-https://maximsupport.microsoftcrmportals.com/en-us/knowledgebase/article/KA-13834
+For a detailed usage guide, see:  
 
-Same procedure as the article above, but flash the MAX32630FTHR with "SH_Bootloader_v012.bin" instead of "MRD220_MAX32630_Host_FW_x.x.x_ASCII.bin".
+	https://maximsupport.microsoftcrmportals.com/en-us/knowledgebase/article/KA-13834
 
-The command in step 4 will now be a Python command instead:
-"python flash.py -f [msbl filename] -p [your COM port]
+1.  Connect the SWD cable between the smaller MAX32625PICO programmer board ("pico") to the MAX32630FTHR ("fthr").
 
-The delay factor (-d) is no longer needed.
+2.  Connect both boards to the host PC via the micro-usb ports.
+
+3.  Drag and drop "MAX32630FTHR_msbl_flasher.bin" onto the DAPLINK drive to flash the "fthr" board.
+
+4.  Remove the connections for the "pico" board.
+
+5.  Connect the "fthr" board to the MAX32664.  For pin-outs on the "fthr" board, see https://datasheets.maximintegrated.com/en/ds/MAX32630FTHR.pdf
+	- Connect P3_5 to SLAVE_SCL (external pull-up required)
+	- Connect P3_4 to SLAVE_SDA (external pull-up required)
+	- Connect P5_6 to RSTN
+	- Connect P5_4 to MFIO
+	- Connect GND to VSS (GND) on the design
+	- (Optional) Connect 3V3 to VDD, otherwise supply power from the MAX32664's board
+
+6.  Open a command prompt and cd into this directory
+
+7.  Run the command below to flash an msbl file.  Run flash.exe -h for help with the host program.
+
+	"flash.exe -f [msbl filename] -p [your COM port]
+
+	Ex:  "flash.exe -f "MAX32664C_OB07_WHRM_AEC_SCD_WSPO2_C_33.13.12.msbl" -p "COM16"
+
+	If the msbl file is not located next to the executable, you will need to pass in the full filepath.  
+	Ex:  -f "C:\Documents\MAX32664\msbl files\MAX32664C_OB07_WHRM_AEC_SCD_WSPO2_C_33.13.12.msbl"
+
+
+Source code is available at https://github.com/MaximIntegratedTechSupport/MAX32630FTHR_msbl_flasher
