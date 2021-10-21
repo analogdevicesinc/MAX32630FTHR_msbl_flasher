@@ -87,9 +87,8 @@ if __name__ == "__main__":
 		print(f"{Fore.CYAN}Failed to retrieve current version #, but there may not be anything flashed.  Attempting to proceed anyways...{Fore.WHITE}")
 
 	# Enter bootloader mode
-	print(f"Entering bootloader mode...", end="")
+	print(f"Entering bootloader mode...")
 	bl.send_cmd("bootldr")
-	print(f"{Fore.GREEN}Success!{Fore.WHITE}")
 
 	# Verify operating mode
 	op_mode = bl.send_cmd("op_mode")
@@ -145,9 +144,8 @@ if __name__ == "__main__":
 		i += 1
 
 	# Exit bootloader mode, enter application mode
-	print("Exiting bootloader mode...", end="")
+	print("Exiting bootloader mode...")
 	bl.send_cmd("exit")
-	print(f"{Fore.GREEN}Success!{Fore.WHITE}")
 
 	# Let Sensor Hub initialize
 	print("Sleeping for 3s to let Sensor Hub initialize", end="")
