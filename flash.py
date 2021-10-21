@@ -64,6 +64,10 @@ if __name__ == "__main__":
 	bl = bootloader_api(args.port)
 	print(f"{Fore.GREEN}Success!{Fore.WHITE}")
 
+	# Enter application mode on start-up
+	print(f"Resetting to application mode...")
+	bl.send_cmd("exit")
+
 	# Let Sensor Hub initialize
 	print("Sleeping for 3s to let Sensor Hub initialize", end="")
 	for i in range(6):
@@ -126,7 +130,7 @@ if __name__ == "__main__":
 	print(f"{Fore.GREEN}Success!{Fore.WHITE}")
 
 	# Erase existing application flash memory
-	print(f"Erasing existing application flash memory...", end="")
+	print(f"Erasing existing msbl file...", end="")
 	bl.send_cmd("erase")
 	print(f"{Fore.GREEN}Success!{Fore.WHITE}")
 
