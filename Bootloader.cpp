@@ -199,7 +199,8 @@ sh_err_t Bootloader::erase() {
     char recv;
 
     i2c->write(this->sh_addr, send, 2);
-    wait_ms(3000); // This command has a 1400ms delay listed as the Sensor Hub erases the flash memory.  However, for larger applications this can take longer.  The 3s window here should give plenty of headroom.
+    wait_ms(3000);  // This command has a 1400ms delay listed.  However, for larger applications this can take longer.  
+                    // The 3s window here is used to account for the largest page size (29 pages).  A "safe" number was found to be 100ms/page.
     i2c->read(this->sh_addr, &recv, 1);
 
     return (sh_err_t)recv;
