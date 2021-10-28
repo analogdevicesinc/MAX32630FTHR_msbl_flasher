@@ -1,3 +1,4 @@
+[About]
 MSBL flashing firmware and control script for the MAX32630FTHR.  This software flashes .msbl files onto a MAX32664 Biometric Sensor Hub.  The MAX32664 can be on
 one of Maxim's reference designs or on a custom PCB, provided that the necessary hardware connections are exposed correctly.
 - RSTN
@@ -9,7 +10,7 @@ one of Maxim's reference designs or on a custom PCB, provided that the necessary
 Additionally, VDD power must be supplied to the MAX32664.  This can come from the MAX32630FTHR or from the target design.  This software uses 3.3V logic level.
 It's recommended to power the MAX32664 from 3.3V for the flash, otherwise use a logic level translator.
 
-Usage:
+[Usage]
 For a detailed usage guide, see:  
 
 	https://maximsupport.microsoftcrmportals.com/en-us/knowledgebase/article/KA-13834
@@ -30,7 +31,7 @@ For a detailed usage guide, see:
 	- Connect GND to VSS (GND) on the design
 	- (Optional) Connect 3V3 to VDD, otherwise supply power from the MAX32664's board
 
-6.  Open a command prompt and cd into this directory
+6.  Open a command prompt and "cd" into this directory
 
 7.  Run the command below to flash an msbl file.  Run flash.exe -h for help with the host program.
 
@@ -41,5 +42,16 @@ For a detailed usage guide, see:
 	If the msbl file is not located next to the executable, you will need to pass in the full filepath.  
 	Ex:  -f "C:\Documents\MAX32664\msbl files\MAX32664C_OB07_WHRM_AEC_SCD_WSPO2_C_33.13.12.msbl"
 
+7a.  Alternatively, the flashing program can be run as a Python3 script.  "cd" into the Python directory and run "pip install -r requirements.txt".  Then, use...
 
-Source code is available at https://github.com/MaximIntegratedTechSupport/MAX32630FTHR_msbl_flasher
+	"python flash.py -f [msbl filename] -p [your COM port]
+
+[Source Code]
+Full source code is available at https://github.com/MaximIntegratedTechSupport/MAX32630FTHR_msbl_flasher, and is dependent on mbed-os.  
+
+The project can be built with mbed-cli, which is not straightforward to set up.  See https://maximsupport.microsoftcrmportals.com/en-us/knowledgebase/article/KA-15675
+
+The flash.exe executable was generated from the Python source files with pyinstaller:
+	pip install pyinstaller
+	pip install auto-py-to-exe
+	pyinstaller --noconfirm --onefile --console flash.py
