@@ -1,5 +1,5 @@
 # About
-MSBL flashing firmware and control script for the MAX32630FTHR.  This software flashes .msbl files onto a [MAX32664](https://www.maximintegrated.com/en/products/interface/signal-integrity/MAX32664.html) Biometric Sensor Hub.  The MAX32664 can be on one of Maxim's reference designs or on a custom PCB, provided that the necessary hardware connections are exposed correctly.
+Software and firmware for flashing .msbl files using the [MAX32630FTHR](https://www.maximintegrated.com/en/products/microcontrollers/MAX32630FTHR.html).  This software flashes .msbl files onto a [MAX32664](https://www.maximintegrated.com/en/products/interface/signal-integrity/MAX32664.html) Biometric Sensor Hub.  The MAX32664 can be on one of Maxim's reference designs or on a custom PCB, provided that the necessary hardware connections are exposed correctly.
 - RSTN
 - MFIO
 - SLAVE_SCL (external pull-up required)
@@ -32,14 +32,14 @@ For a detailed usage guide, see:  [KA-13834](https://maximsupport.microsoftcrmpo
 
 7.  Run the command below to flash an msbl file.  Run flash.exe -h for help with the host program.
 
-	`"flash.exe -f [msbl filename] -p [your COM port]`
+	`"flash.exe -f [msbl filename] -p [MAX32630FTHR COM Port]`
 
 	Ex:  `"flash.exe -f "MAX32664C_OB07_WHRM_AEC_SCD_WSPO2_C_33.13.12.msbl" -p "COM16"`
 
 	If the msbl file is not located next to the executable, you will need to pass in the full filepath.  
 	Ex:  `-f "C:\Documents\MAX32664\msbl files\MAX32664C_OB07_WHRM_AEC_SCD_WSPO2_C_33.13.12.msbl"`
 
-8.  Alternatively, the flashing program can be run as a Python3 script.  "cd" into the Python directory and run "pip install -r requirements.txt".  Then, use...
+8.  Alternatively, the flashing program can be run as a Python (Python 3+) script.  "cd" into the Python directory and run "pip install -r requirements.txt".  Then, use...
 
 	`"python flash.py -f [msbl filename] -p [your COM port]`
 
