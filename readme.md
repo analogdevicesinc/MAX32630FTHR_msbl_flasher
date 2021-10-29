@@ -46,7 +46,16 @@ For a detailed usage guide, see:  [KA-13834](https://maximsupport.microsoftcrmpo
 # Source Code
 Full source code is available [here](https://github.com/MaximIntegratedTechSupport/MAX32630FTHR_msbl_flasher), and is dependent on mbed-os.  
 
-The project can be built with mbed-cli, which is not straightforward to set up.  See https://maximsupport.microsoftcrmportals.com/en-us/knowledgebase/article/KA-15675
+The project can be built with mbed-cli, which is not straightforward to set up.  See https://maximsupport.microsoftcrmportals.com/en-us/knowledgebase/article/KA-15675.  With mbed-cli set up, run:
+
+	mbed init
+	mbed deploy (this will take a while)
+	
+and...
+	
+	mbed compile
+	
+... to build the firmware.
 
 The flash.exe executable was generated from the Python source files with pyinstaller:
 	
