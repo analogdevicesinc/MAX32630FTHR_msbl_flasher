@@ -42,6 +42,8 @@ For a detailed usage guide, see:  [KA-13834](https://maximsupport.microsoftcrmpo
 8.  Alternatively, the flashing program can be run as a Python (Python 3+) script.  "cd" into the Python directory and run "pip install -r requirements.txt".  Then, use...
 
 	`"python flash.py -f [msbl filename] -p [your COM port]`
+	
+9. Alternatively, on Windows the included "run.bat" file can be used. This file will prompt the user to select from a list of .msbl files that were copied in the same location as the "flash.exe" file. Once the file has been selected by the assigned list number, then the console prompts the user to enter the assigned COM port to the MAX32630FTHR. Once this has been entered the program proceeds to flash the msbl file.
 
 # Source Code
 Full source code is available [here](https://github.com/MaximIntegratedTechSupport/MAX32630FTHR_msbl_flasher), and is dependent on mbed-os.  
