@@ -6,8 +6,8 @@ Software and firmware for flashing .msbl files using the [MAX32630FTHR](https://
 - SLAVE_SDA (external pull-up required)
 - VSS (GND)
 
-Additionally, VDD power must be supplied to the MAX32664.  This can come from the MAX32630FTHR or from the target design.  This software uses 3.3V logic level.
-It's recommended to power the MAX32664 from 3.3V for the flash, otherwise use a logic level translator to 1.8V.
+Additionally, VDD power must be supplied to the MAX32664.  This can come from the MAX32630FTHR or from the target design.  The .bin file software uses 1.8V logic level.
+It's recommended to power the MAX32664 with the appropiate VDD supply to match the logic level fo the host microcontroller. If the host micro is unable to meet the logic level, then a logic level translator needs to be use to be able to program the part. 
 
 # Usage
 For a detailed usage guide, see:  [KA-13834](https://maximsupport.microsoftcrmportals.com/en-us/knowledgebase/article/KA-13834)
@@ -26,7 +26,7 @@ For a detailed usage guide, see:  [KA-13834](https://maximsupport.microsoftcrmpo
 	- Connect P5_6 to RSTN
 	- Connect P5_4 to MFIO
 	- Connect GND to VSS (GND) on the design
-	- (Optional) Connect 3V3 to VDD, otherwise supply power from the MAX32664's board
+	- (Optional) Connect 1V8 to VDD, otherwise the supply power for the MAX32664 needs to match the host mictocontoller logic level. 
 
 6.  Open a command prompt and "cd" into this directory
 
